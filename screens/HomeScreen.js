@@ -1,5 +1,5 @@
 import { View, Text, Image, TextInput, ScrollView } from 'react-native'
-import React, { useLayoutEffect } from 'react'
+import React, { useLayoutEffect, useEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
 // import SafeViewAndroid from '../components/AndroidSafeView'
 import { 
@@ -10,17 +10,34 @@ import {
  } from 'react-native-heroicons/outline'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Categories from '../components/Categories'
+import FeaturedRow from '../components/FeaturedRow'
+import sanityClient from '../sanity'
 
 const HomeScreen = () => {
     const navigation = useNavigation();
+    const [featuredCategories, setFeaturedCategories] = useState([])
 
     useLayoutEffect(() => {
         navigation.setOptions({
             headerShown: false,
     })}, []);
 
+    useEffect(() => {
+        sanityClient.fetch(`
+        *[_type == "featured"] {
+            ...,
+            restaurants[] -> {
+                ...,
+                dishes[] ->
+            }
+        }
+        `).then((data) => {
+            setFeaturedCategories(data)
+        })
+    }, [])
 
 
+    // console.log(featuredCategories)
 
   return (
     <SafeAreaView className="bg-white pt-5 w-screen ">
@@ -53,10 +70,23 @@ const HomeScreen = () => {
             </View>
 
             {/* Body */}
-            <ScrollView className="bg-gray-100" >
+            <ScrollView className="bg-gray-100" contentContainerStyle={{paddingBottom: 150}} >
                 {/* Categories */}
                 <Categories  />
-                {/* Featured Rows */}
+                {/* Featured */}
+                {featuredCategories?.map((cat) => ( 
+                        <FeaturedRow 
+                        key={cat._id}
+                        id={cat._id}
+                        title={cat.name}
+                        description={cat.short_description}
+                    />)
+                )}
+                {/* <FeaturedRow id="1" title="Featured" description="Paid placements from our partners" /> */}
+                {/* Tasty Discounts */}
+                {/* <FeaturedRow id="2" title="Tasty Discounts" description="Everyone's been enjoying these tasty discounts!"  /> */}
+                {/* Offers near you */}
+                {/* <FeaturedRow id="3" title="Offers near you!" description="Why not support your local restaurant tonight?"  /> */}
 
             </ScrollView>
 
